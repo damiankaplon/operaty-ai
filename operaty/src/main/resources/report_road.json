@@ -1,0 +1,152 @@
+{
+  "title": "Operat Drogowy Extraction Schema",
+  "description": "Schema for structured output of extracted data from operat drogowy PDFs related to excavation and embankment works.",
+  "type": "object",
+  "properties": {
+    "reportNumber": {
+      "type": ["string", "null"],
+      "description": "Numer identyfikacyjny operatu, np. 5516. Służy do jednoznacznej identyfikacji dokumentu."
+    },
+    "area": {
+      "type": ["string", "null"],
+      "description": "Lokalizacja robót drogowych, np. DOJAZDOWE lub TRASA GŁÓWNA. Pomaga w oznaczeniu obszaru prac."
+    },
+    "roadNumber": {
+      "type": ["string", "null"],
+      "description": "Numer drogi, na której prowadzone są roboty, np. '6' lub 'TG' (Trasa Główna)."
+    },
+    "from": {
+      "type": ["string", "null"],
+      "description": "Początkowy kilometr (km od), od którego zaczynają się roboty, np. '0+000' lub '178+950'."
+    },
+    "to": {
+      "type": ["string", "null"],
+      "description": "Końcowy kilometr (do km), do którego prowadzone są roboty, np. '1+700' lub '179+400'."
+    },
+    "miscellaneous": {
+      "type": ["string", "null"],
+      "description": "Informacje dodatkowe dotyczące operatu, gdy występują."
+    },
+    "detailed": {
+      "type": ["string", "null"],
+      "description": "Wyszczególnione elementy robót, np. 'Roboty drogowe'."
+    },
+    "task": {
+      "type": ["string", "null"],
+      "description": "Szczegółowe zadanie wykonywane w ramach operatu, np. 'wykonanie WYKOPÓW / wbudowanie NASYPÓW'."
+    },
+    "report": {
+      "type": ["string", "null"],
+      "description": "Pełny numer operatu wraz z prefiksem, np. 'D5516'."
+    },
+    "measurementDate": {
+      "type": ["string", "null"],
+      "format": "date",
+      "description": "Data wykonania pomiaru w formacie YYYY-MM-DD, np. '2025-05-28'."
+    },
+    "reportDate": {
+      "type": ["string", "null"],
+      "format": "date",
+      "description": "Data sporządzenia operatu w formacie YYYY-MM-DD, np. '2025-06-02'."
+    },
+    "length": {
+      "type": ["string", "null"],
+      "description": "Długość odcinka objętego pracami, jeśli jest podana."
+    },
+    "loweredCurb": {
+      "type": ["string", "null"],
+      "description": "Informacja o obniżeniu krawężnika, jeśli występuje."
+    },
+    "rim": {
+      "type": ["string", "null"],
+      "description": "Dane dotyczące obrzeża drogi, jeśli są zawarte."
+    },
+    "inOut": {
+      "type": ["string", "null"],
+      "description": "Informacja o przywóz/wywóz materiałów lub ziemi z placu budowy."
+    },
+    "flat": {
+      "type": ["string", "null"],
+      "description": "Parametry nawierzchni płaskiej w obrębie prac."
+    },
+    "pa": {
+      "type": ["string", "null"],
+      "description": "Szczegółowe informacje dotyczące warstwy bitumicznej PA, jeśli występuje."
+    },
+    "slope": {
+      "type": ["string", "null"],
+      "description": "Opis skarp lub stoków w rejonie prac."
+    },
+    "ditch": {
+      "type": ["string", "null"],
+      "description": "Dane dotyczące rowów przydrożnych lub odwadniających."
+    },
+    "demolition": {
+      "type": ["string", "null"],
+      "description": "Informacje o rozbiórkach w ramach operatu."
+    },
+    "surface": {
+      "type": ["string", "null"],
+      "description": "Powierzchnia objęta robotami, jeśli podana."
+    },
+    "volume": {
+      "type": ["string", "null"],
+      "description": "Objętość materiału roboczego lub wykonanego, jeśli dostępna."
+    },
+    "inner": {
+      "type": ["string", "null"],
+      "description": "Dane wewnętrzne dotyczące struktury materiału lub budowy."
+    },
+    "odh": {
+      "type": ["string", "null"],
+      "description": "Grubość odhumusowania (ODH) jeśli występuje."
+    },
+    "dig": {
+      "type": ["string", "null"],
+      "description": "Wartość wymiany wykopu w ramach operatu, czyli objętość ziemi wydobytej."
+    },
+    "infill": {
+      "type": ["string", "null"],
+      "description": "Wartość wymiany zasypu, czyli objętość materiału zasypowego."
+    },
+    "bank": {
+      "type": ["string", "null"],
+      "description": "Objętość lub ilość materiału użyta do wykonania nasypu."
+    },
+    "excavation": {
+      "type": ["string", "null"],
+      "description": "Objętość lub ilość materiału wydobytego przy wykopach."
+    }
+  },
+  "required": [
+    "reportNumber",
+    "area",
+    "roadNumber",
+    "from",
+    "to",
+    "miscellaneous",
+    "detailed",
+    "task",
+    "report",
+    "measurementDate",
+    "reportDate",
+    "length",
+    "loweredCurb",
+    "rim",
+    "inOut",
+    "flat",
+    "pa",
+    "slope",
+    "ditch",
+    "demolition",
+    "surface",
+    "volume",
+    "inner",
+    "odh",
+    "dig",
+    "infill",
+    "bank",
+    "excavation"
+  ],
+  "additionalProperties": false
+}
