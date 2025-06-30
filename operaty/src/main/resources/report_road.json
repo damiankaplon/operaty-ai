@@ -1,121 +1,117 @@
 {
   "title": "Operat Drogowy Extraction Schema",
-  "description": "Schema for structured output of extracted data from operat drogowy PDFs related to excavation and embankment works.",
+  "description": "JSON output schema danych pozyskanych z plików PDF operacji drogowych dotyczących prac wykopaliskowych i nasypowych.",
   "type": "object",
   "properties": {
     "reportNumber": {
-      "type": ["string", "null"],
-      "description": "Numer identyfikacyjny operatu, np. 5516. Służy do jednoznacznej identyfikacji dokumentu."
+      "type": ["number", "null"],
+      "description": "Unikalny numer identyfikacyjny operatu służący do jego jednoznacznej identyfikacji."
     },
     "area": {
       "type": ["string", "null"],
-      "description": "Lokalizacja robót drogowych, np. DOJAZDOWE lub TRASA GŁÓWNA. Pomaga w oznaczeniu obszaru prac."
+      "description": "Nazwa obszaru, lokalizacji lub sekcji, w której realizowane są prace. Najczęściej miejscowość w której dokonano prac opisanych w operacie. Na początku dokumentu często zawarta jest informacja jakiej budowy drogi dotyczy operat. Operaty mogą dotyczyć realizacji etapu trasy głównej. Wtedy zwróć TRASA GŁÓWNA. Operat może również dotyczyć drogi dojazdowej lub poprzecznej. Natomiast jeśli operat zawiera bardziej szczegółowe informację o miejscowości wtedy zwróć nazwę miejscowości"
     },
     "roadNumber": {
       "type": ["string", "null"],
-      "description": "Numer drogi, na której prowadzone są roboty, np. '6' lub 'TG' (Trasa Główna)."
+      "description": "Numer, symbol lub oznaczenie drogi będącej przedmiotem operatu. Jeśli operat dotyczy części trasy głównej nie musisz zwracać numeru drogi wystarczy że zwrócisz TRASA GŁÓWNA. Jeśli operat nie dotyczy budowy części trasy głównej należy zwrócić informacje o tym jakiego numeru drogi dotyczy lub null"
     },
     "from": {
       "type": ["string", "null"],
-      "description": "Początkowy kilometr (km od), od którego zaczynają się roboty, np. '0+000' lub '178+950'."
+      "description": "Wartość określająca punkt początkowy zakresu robót (kilometraż, lokalizacja początkowa)."
     },
     "to": {
       "type": ["string", "null"],
-      "description": "Końcowy kilometr (do km), do którego prowadzone są roboty, np. '1+700' lub '179+400'."
-    },
-    "miscellaneous": {
-      "type": ["string", "null"],
-      "description": "Informacje dodatkowe dotyczące operatu, gdy występują."
+      "description": "Wartość określająca punkt końcowy zakresu robót (kilometraż, lokalizacja końcowa)."
     },
     "detailed": {
       "type": ["string", "null"],
-      "description": "Wyszczególnione elementy robót, np. 'Roboty drogowe'."
+      "description": "Ogólna klasyfikacja lub rodzaj wykonywanych prac lub elementów objętych operatem."
     },
     "task": {
       "type": ["string", "null"],
-      "description": "Szczegółowe zadanie wykonywane w ramach operatu, np. 'wykonanie WYKOPÓW / wbudowanie NASYPÓW'."
+      "description": "Najbardziej szczególny, główny element zakresu prac realizowanych na podstawie operatu."
     },
     "report": {
       "type": ["string", "null"],
-      "description": "Pełny numer operatu wraz z prefiksem, np. 'D5516'."
+      "description": "Oznaczenie operatu, często z prefiksem literowym wskazującym typ dokumentu."
     },
     "measurementDate": {
       "type": ["string", "null"],
       "format": "date",
-      "description": "Data wykonania pomiaru w formacie YYYY-MM-DD, np. '2025-05-28'."
+      "description": "Data przeprowadzenia pomiarów lub określenia danych źródłowych."
     },
     "reportDate": {
       "type": ["string", "null"],
       "format": "date",
-      "description": "Data sporządzenia operatu w formacie YYYY-MM-DD, np. '2025-06-02'."
+      "description": "Data sporządzenia, podpisania lub zatwierdzenia operatu."
     },
     "length": {
       "type": ["string", "null"],
-      "description": "Długość odcinka objętego pracami, jeśli jest podana."
+      "description": "Długość odcinka, obszaru lub elementu objętego pracami, wyrażona w odpowiednich jednostkach."
     },
     "loweredCurb": {
       "type": ["string", "null"],
-      "description": "Informacja o obniżeniu krawężnika, jeśli występuje."
+      "description": "Informacje o obniżonych krawężnikach lub innych elementach ograniczających drogę."
     },
     "rim": {
       "type": ["string", "null"],
-      "description": "Dane dotyczące obrzeża drogi, jeśli są zawarte."
+      "description": "Dane o obrzeżach, ograniczeniach lub krawędziach wykonywanych nawierzchni."
     },
     "inOut": {
       "type": ["string", "null"],
-      "description": "Informacja o przywóz/wywóz materiałów lub ziemi z placu budowy."
+      "description": "Dane dotyczące przemieszczania ziemi, materiałów lub innych surowców na placu budowy lub poza nim."
     },
     "flat": {
       "type": ["string", "null"],
-      "description": "Parametry nawierzchni płaskiej w obrębie prac."
+      "description": "Parametry lub ilości dotyczące nawierzchni płaskich lub wyrównanych w danym zakresie robót."
     },
     "pa": {
       "type": ["string", "null"],
-      "description": "Szczegółowe informacje dotyczące warstwy bitumicznej PA, jeśli występuje."
+      "description": "Parametry dotyczące warstw, materiałów lub konstrukcji określanych skrótem PA (jeśli występuje)."
     },
     "slope": {
       "type": ["string", "null"],
-      "description": "Opis skarp lub stoków w rejonie prac."
+      "description": "Informacje dotyczące skarp, nachyleń lub stoków w rejonie objętym operatem."
     },
     "ditch": {
       "type": ["string", "null"],
-      "description": "Dane dotyczące rowów przydrożnych lub odwadniających."
+      "description": "Dane o istniejących lub wykonywanych rowach, elementach odwodnienia, drenażu itp."
     },
     "demolition": {
       "type": ["string", "null"],
-      "description": "Informacje o rozbiórkach w ramach operatu."
+      "description": "Zakres robót rozbiórkowych, demontażowych lub usuwania istniejących elementów."
     },
     "surface": {
       "type": ["string", "null"],
-      "description": "Powierzchnia objęta robotami, jeśli podana."
+      "description": "Powierzchnia elementów, terenów lub materiałów objętych operatem (wartość i/lub jednostki)."
     },
     "volume": {
       "type": ["string", "null"],
-      "description": "Objętość materiału roboczego lub wykonanego, jeśli dostępna."
+      "description": "Objętość materiału, ziemi, nasypów lub wykopów dotycząca prac objętych operatem."
     },
     "inner": {
       "type": ["string", "null"],
-      "description": "Dane wewnętrzne dotyczące struktury materiału lub budowy."
+      "description": "Dane dotyczące elementów wewnętrznych konstrukcji, obiektów lub technologii prac."
     },
     "odh": {
       "type": ["string", "null"],
-      "description": "Grubość odhumusowania (ODH) jeśli występuje."
+      "description": "Informacje o warstwach odhumusowania (Grubość ODH) lub innych elementach przygotowania podłoża."
     },
     "dig": {
-      "type": ["string", "null"],
-      "description": "Wartość wymiany wykopu w ramach operatu, czyli objętość ziemi wydobytej."
+      "type": ["number", "null"],
+      "description": "Objętość wybranego gruntu wykopu. Ilość materiału usuniętego w ramach wymiany"
     },
     "infill": {
-      "type": ["string", "null"],
-      "description": "Wartość wymiany zasypu, czyli objętość materiału zasypowego."
+      "type": ["number", "null"],
+      "description": "Objętość materiału użytego na zasyp, wypełnienie lub odtworzenie elementów posadowienia."
     },
     "bank": {
-      "type": ["string", "null"],
-      "description": "Objętość lub ilość materiału użyta do wykonania nasypu."
+      "type": ["number", "null"],
+      "description": "Objętość lub ilość materiału użytego do budowy nasypów lub podwyższeń terenu."
     },
     "excavation": {
-      "type": ["string", "null"],
-      "description": "Objętość lub ilość materiału wydobytego przy wykopach."
+      "type": ["number", "null"],
+      "description": "Objętość lub parametry wszystkich wykopów wykonanych podczas robót."
     }
   },
   "required": [
@@ -124,7 +120,6 @@
     "roadNumber",
     "from",
     "to",
-    "miscellaneous",
     "detailed",
     "task",
     "report",

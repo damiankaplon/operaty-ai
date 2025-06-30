@@ -14,6 +14,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.URLProtocol.Companion.HTTPS
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.config.ApplicationConfig
+import io.ktor.client.plugins.logging.LogLevel
 import jakarta.inject.Singleton
 import kotlinx.serialization.json.Json
 
@@ -36,7 +37,8 @@ class HttpModule {
 					bearerAuth(config.property("app.chatGpt.apiKey").getString())
 				}
 			}
-			install(HttpTimeout) { requestTimeoutMillis = 60000 }
+			
+			install(HttpTimeout) { requestTimeoutMillis = 120000 }
 			install(ContentNegotiation) {
 				json(
 					Json {
@@ -46,6 +48,7 @@ class HttpModule {
 				)
 			}
 			install(Logging) {
+				level = LogLevel.ALL
 				sanitizeHeader { header -> header == HttpHeaders.Authorization }
 			}
 		}
