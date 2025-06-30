@@ -106,7 +106,7 @@ fun Application.module() {
 							model = "gpt-4.1-mini",
 							prompt = Prompt(
 								id = "pmpt_685c304658a081978b7633929d9785f702284f6f4e91ded8",
-								version = "4"
+								version = "6"
 							),
 							input = setOf(
 								Input(
