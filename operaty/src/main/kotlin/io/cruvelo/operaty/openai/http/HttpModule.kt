@@ -38,7 +38,7 @@ class HttpModule {
 				}
 			}
 			
-			install(HttpTimeout) { requestTimeoutMillis = 60000 }
+			install(HttpTimeout) { requestTimeoutMillis = 120000 }
 			install(ContentNegotiation) {
 				json(
 					Json {

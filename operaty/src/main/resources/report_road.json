@@ -4,7 +4,7 @@
   "type": "object",
   "properties": {
     "reportNumber": {
-      "type": ["string", "null"],
+      "type": ["number", "null"],
       "description": "Unikalny numer identyfikacyjny operatu służący do jego jednoznacznej identyfikacji."
     },
     "area": {
@@ -98,19 +98,19 @@
       "description": "Informacje o warstwach odhumusowania (Grubość ODH) lub innych elementach przygotowania podłoża."
     },
     "dig": {
-      "type": ["string", "null"],
+      "type": ["number", "null"],
       "description": "Objętość wybranego gruntu wykopu. Ilość materiału usuniętego w ramach wymiany"
     },
     "infill": {
-      "type": ["string", "null"],
+      "type": ["number", "null"],
       "description": "Objętość materiału użytego na zasyp, wypełnienie lub odtworzenie elementów posadowienia."
     },
     "bank": {
-      "type": ["string", "null"],
+      "type": ["number", "null"],
       "description": "Objętość lub ilość materiału użytego do budowy nasypów lub podwyższeń terenu."
     },
     "excavation": {
-      "type": ["string", "null"],
+      "type": ["number", "null"],
       "description": "Objętość lub parametry wszystkich wykopów wykonanych podczas robót."
     }
   },

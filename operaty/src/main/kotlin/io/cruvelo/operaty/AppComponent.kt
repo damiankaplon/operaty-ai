@@ -9,11 +9,16 @@ import jakarta.inject.Singleton
 
 @Singleton
 @Component(
-	modules = [HttpModule::class]
+	modules = [
+		HttpModule::class,
+		io.cruvelo.operaty.serialization.Module::class
+	]
 )
 interface AppComponent {
 
 	fun chatGptHttpClient(): ChatGptHttpClient
+
+	fun json(): kotlinx.serialization.json.Json
 
 	@Component.Builder
 	interface Builder {
