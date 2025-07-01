@@ -37,6 +37,7 @@ const COLUMNS: GridColDef[] = [
 
 export default function Road() {
     const [rows, setRows] = React.useState<RoadReport[]>([]);
+    const [isLoading, setIsLoading] = React.useState(false);
     return (
         <div style={{width: '100vw', height: '100vh', backgroundColor: '#f5f5f5'}}>
             <div style={{height: '100%', width: '100%'}}>
@@ -51,9 +52,19 @@ export default function Road() {
                         },
                     }}
                     pageSizeOptions={[5, 10, 25]}
+                    loading={isLoading}
+                    slotProps={{
+                        loadingOverlay: {
+                            variant: 'linear-progress'
+                        }
+                    }}
                 />
             </div>
-            <AddButton onSuccess={(roadReport) => setRows((oldRows) => [...oldRows, roadReport])}/>
+            <AddButton onSuccess={(roadReport) => {
+                setRows((oldRows) => [...oldRows, roadReport]);
+                setIsLoading(false);
+            }} onLoad={() => setIsLoading(true)}
+            />
         </div>
     )
 }

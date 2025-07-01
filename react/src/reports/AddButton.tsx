@@ -8,6 +8,7 @@ import type {RoadReport} from "./RoadReport.ts";
 async function handleFileUpload(
     event: React.ChangeEvent<HTMLInputElement>,
     onSuccess: (roadReport: RoadReport) => void,
+    onLoad?: () => void
 ) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -16,6 +17,7 @@ async function handleFileUpload(
     formData.append('file', file);
 
     try {
+        onLoad?.();
         const response = await fetch('/api/reports/road', {
             method: 'POST',
             body: formData
@@ -28,7 +30,7 @@ async function handleFileUpload(
 }
 
 export function AddButton(
-    {onSuccess}: { onSuccess: (roadReport: RoadReport) => void, }
+    {onSuccess, onLoad}: { onSuccess: (roadReport: RoadReport) => void, onLoad?: () => void }
 ) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     return (
@@ -37,7 +39,7 @@ export function AddButton(
                 type="file"
                 ref={fileInputRef}
                 style={{display: 'none'}}
-                onChange={(event => handleFileUpload(event, onSuccess))}
+                onChange={(event => handleFileUpload(event, onSuccess, onLoad))}
                 accept=".pdf"
             />
             <Fab
