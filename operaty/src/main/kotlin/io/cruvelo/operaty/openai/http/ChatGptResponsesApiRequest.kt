@@ -8,7 +8,7 @@ import kotlinx.serialization.json.JsonObject
 data class ChatGptResponsesApiRequest(
 	val model: String,
 	val prompt: Prompt,
-	val input: Set<Input>,
+	val input: Set<ContentInput>,
 	val text: Text,
 ) {
 
@@ -19,7 +19,7 @@ data class ChatGptResponsesApiRequest(
 	)
 
 	@Serializable
-	data class Input(
+	data class ContentInput(
 		val role: String,
 		val content: Set<Content>
 	) {
@@ -28,7 +28,8 @@ data class ChatGptResponsesApiRequest(
 		data class Content(
 			val type: String,
 			@SerialName("file_id")
-			val fileId: String? = null
+			val fileId: String? = null,
+			val text: String? = null
 		)
 	}
 

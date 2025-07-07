@@ -11,6 +11,7 @@ class Module {
 	@Provides
 	@Singleton
 	fun provideJson(): Json = Json {
+		explicitNulls = false
 		ignoreUnknownKeys = true
 		prettyPrint = true
 	}

@@ -1,10 +1,9 @@
 package io.cruvelo.operaty
 
-import FileUploadResponse
 import io.cruvelo.operaty.openai.Schemas
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest
-import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest.Input
-import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest.Input.Content
+import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest.ContentInput
+import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest.ContentInput.Content
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest.Prompt
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest.Text
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest.Text.Format
@@ -12,17 +11,13 @@ import io.cruvelo.operaty.openai.http.ChatGptResponsesApiResponse
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.request.forms.MultiPartFormDataContent
-import io.ktor.client.request.forms.formData
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType.Application.Json
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
 import io.ktor.http.contentType
-import io.ktor.http.headers
 import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
@@ -39,7 +34,8 @@ import io.ktor.server.routing.routing
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.readRemaining
 import kotlinx.io.readByteArray
-import java.util.UUID
+import org.apache.pdfbox.Loader
+import org.apache.pdfbox.text.PDFTextStripper
 
 private val LOGGER = KotlinLogging.logger {}
 
@@ -77,28 +73,11 @@ fun Application.module() {
 						part.dispose()
 					}
 
-					val fileResponse = chatGptHttpClient.post {
-						url { path("v1/files") }
-						setBody(
-							MultiPartFormDataContent(
-								formData {
-									append(
-										key = "purpose",
-										value = "user_data"
-									)
-									append(
-										key = "file",
-										value = fileBytes,
-										headers = headers {
-											append(HttpHeaders.ContentDisposition, "filename=${UUID.randomUUID()}.pdf")
-										}
-									)
-								}
-							)
-						)
+					val pdf = Loader.loadPDF(fileBytes)
+					val textStripper = PDFTextStripper().apply {
+						sortByPosition = true
 					}
-					val fileId: String = fileResponse.body<FileUploadResponse>()
-						.let(FileUploadResponse::id)
+					val pdfText = textStripper.getText(pdf)
 
 					val response: ChatGptResponsesApiResponse = chatGptHttpClient.post {
 						url { path("v1/responses") }
@@ -111,9 +90,14 @@ fun Application.module() {
 									version = "7"
 								),
 								input = setOf(
-									Input(
+									ContentInput(
 										role = "user",
-										content = setOf(Content("input_file", fileId))
+										content = setOf(
+											Content(
+												type = "input_text",
+												text = pdfText
+											)
+										)
 									)
 								),
 								text = Text(
