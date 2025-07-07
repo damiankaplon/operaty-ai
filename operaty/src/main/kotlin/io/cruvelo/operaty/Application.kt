@@ -84,10 +84,9 @@ fun Application.module() {
 						contentType(Json)
 						setBody(
 							ChatGptResponsesApiRequest(
-								model = "gpt-4.1",
 								prompt = Prompt(
 									id = "pmpt_685c304658a081978b7633929d9785f702284f6f4e91ded8",
-									version = "7"
+									version = "9"
 								),
 								input = setOf(
 									ContentInput(
