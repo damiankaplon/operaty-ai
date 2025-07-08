@@ -26,5 +26,6 @@ export type RoadReport = {
     dig: string,
     infill: string,
     bank: number,
-    excavation: number
+    excavation: number,
+    edited?: boolean,
 }
