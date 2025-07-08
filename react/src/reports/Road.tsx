@@ -3,11 +3,15 @@ import * as React from "react";
 import type {RoadReport} from "./RoadReport.ts";
 import {AddButton} from "./AddButton.tsx";
 import CheckIcon from '@mui/icons-material/Check';
+import {useAppDispatch, useAppSelector} from '../store/hooks.ts';
+import {addRoadReport, confirmRoadReportEdit, updateRoadReport} from './roadReports.store.slice.ts';
 
 const COLUMNS: (onEditConfirmation: (report: RoadReport) => void) => GridColDef<RoadReport>[] = (onEditConfirmation) => [
     {
         field: 'action',
         headerName: 'Potwierdź',
+        sortable: false,
+        filterable: false,
         renderCell: params => {
             if (params.row.edited) {
                 return (
@@ -54,17 +58,16 @@ const COLUMNS: (onEditConfirmation: (report: RoadReport) => void) => GridColDef<
 ];
 
 export default function Road() {
-    const [rows, setRows] = React.useState<RoadReport[]>([]);
     const [isLoading, setIsLoading] = React.useState(false);
+    const dispatch = useAppDispatch();
+    const rows = useAppSelector(state => state.roadReports.reports);
 
     const onRowEdit = (report: RoadReport) => {
-        report.edited = true;
-        setRows([...rows.filter(row => row.reportNumber !== report.reportNumber), report]);
+        dispatch(updateRoadReport(report));
     };
 
     const onEditConfirmation = (report: RoadReport) => {
-        report.edited = false;
-        setRows([...rows.filter(row => row.reportNumber != report.reportNumber), report]);
+        dispatch(confirmRoadReportEdit(report));
     };
 
     return (
@@ -84,7 +87,8 @@ export default function Road() {
                     loading={isLoading}
                     slotProps={{
                         loadingOverlay: {
-                            variant: 'linear-progress'
+                            variant: 'linear-progress',
+                            noRowsVariant: 'linear-progress'
                         }
                     }}
                     processRowUpdate={(newRow: RoadReport) => {
@@ -95,7 +99,7 @@ export default function Road() {
                 />
             </div>
             <AddButton onSuccess={(roadReport) => {
-                setRows((oldRows) => [...oldRows, roadReport]);
+                dispatch(addRoadReport(roadReport));
                 setIsLoading(false);
             }} onLoad={() => setIsLoading(true)}
             />
