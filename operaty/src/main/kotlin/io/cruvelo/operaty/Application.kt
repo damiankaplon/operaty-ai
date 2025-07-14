@@ -8,6 +8,7 @@ import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest.Prompt
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest.Text
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest.Text.Format
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiResponse
+import io.cruvelo.operaty.report.road.RoadReport
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -25,6 +26,7 @@ import io.ktor.server.application.install
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.request.receive
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
@@ -34,6 +36,7 @@ import io.ktor.server.routing.routing
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.readRemaining
 import kotlinx.io.readByteArray
+import kotlinx.serialization.json.Json
 import org.apache.pdfbox.Loader
 import org.apache.pdfbox.text.PDFTextStripper
 
@@ -44,7 +47,9 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-	install(ContentNegotiation) { json() }
+	install(ContentNegotiation) {
+		json(Json { ignoreUnknownKeys = true })
+	}
 	val appComponent = DaggerAppComponent.builder()
 		.applicationConfig(environment.config)
 		.build()
@@ -58,60 +63,68 @@ fun Application.module() {
 	routing {
 		route("api") {
 			route("reports") {
-				post("road") {
-					val multipart = call.receiveMultipart()
-					var fileBytes: ByteArray = byteArrayOf()
+				route("road") {
+					post {
+						val multipart = call.receiveMultipart()
+						var fileBytes: ByteArray = byteArrayOf()
 
-					multipart.forEachPart { part: PartData ->
-						when (part) {
-							is PartData.FileItem -> {
-								val channel: ByteReadChannel = part.provider()
-								fileBytes = fileBytes.plus(channel.readRemaining().readByteArray())
+						multipart.forEachPart { part: PartData ->
+							when (part) {
+								is PartData.FileItem -> {
+									val channel: ByteReadChannel = part.provider()
+									fileBytes = fileBytes.plus(channel.readRemaining().readByteArray())
+								}
+								else -> {}
 							}
-							else -> {}
+							part.dispose()
 						}
-						part.dispose()
-					}
 
-					val pdf = Loader.loadPDF(fileBytes)
-					val textStripper = PDFTextStripper().apply {
-						sortByPosition = true
-					}
-					val pdfText = textStripper.getText(pdf)
+						val pdf = Loader.loadPDF(fileBytes)
+						val textStripper = PDFTextStripper().apply {
+							sortByPosition = true
+						}
+						val pdfText = textStripper.getText(pdf)
 
-					val response: ChatGptResponsesApiResponse = chatGptHttpClient.post {
-						url { path("v1/responses") }
-						contentType(Json)
-						setBody(
-							ChatGptResponsesApiRequest(
-								prompt = Prompt(
-									id = "pmpt_685c304658a081978b7633929d9785f702284f6f4e91ded8",
-									version = "9"
-								),
-								input = setOf(
-									ContentInput(
-										role = "user",
-										content = setOf(
-											Content(
-												type = "input_text",
-												text = pdfText
+						val response: ChatGptResponsesApiResponse = chatGptHttpClient.post {
+							url { path("v1/responses") }
+							contentType(Json)
+							setBody(
+								ChatGptResponsesApiRequest(
+									prompt = Prompt(
+										id = "pmpt_685c304658a081978b7633929d9785f702284f6f4e91ded8",
+										version = "9"
+									),
+									input = setOf(
+										ContentInput(
+											role = "user",
+											content = setOf(
+												Content(
+													type = "input_text",
+													text = pdfText
+												)
 											)
 										)
-									)
-								),
-								text = Text(
-									format = Format(
-										name = "text",
-										type = "json_schema",
-										schema = Schemas.ROAD_REPORT_OUTPUT_JSON_SCHEMA,
-										description = "Extracts the road report data from the PDF file"
+									),
+									text = Text(
+										format = Format(
+											name = "text",
+											type = "json_schema",
+											schema = Schemas.ROAD_REPORT_OUTPUT_JSON_SCHEMA,
+											description = "Extracts the road report data from the PDF file"
+										)
 									)
 								)
 							)
-						)
-					}.body<ChatGptResponsesApiResponse>()
-					val roadReport: RoadReport = appComponent.json().decodeFromString<RoadReport>(response.output.first().content.first().text)
-					call.respond(roadReport)
+						}.body<ChatGptResponsesApiResponse>()
+						val roadReport: RoadReport = appComponent.json().decodeFromString<RoadReport>(response.output.first().content.first().text)
+						call.respond(roadReport)
+					}
+					post("/{reportNumber}/version") {
+						val report = call.receive(RoadReport::class)
+						LOGGER.info { "Updating road report with: " }
+						val controller = appComponent.roadReportController()
+						controller.update(report)
+					}
 				}
 			}
 		}

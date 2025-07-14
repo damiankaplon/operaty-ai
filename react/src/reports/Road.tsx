@@ -4,7 +4,7 @@ import type {RoadReport} from "./RoadReport.ts";
 import {AddButton} from "./AddButton.tsx";
 import CheckIcon from '@mui/icons-material/Check';
 import {useAppDispatch, useAppSelector} from '../store/hooks.ts';
-import {addRoadReport, confirmRoadReportEdit, updateRoadReport} from './roadReports.store.slice.ts';
+import {addRoadReport, editRoadReport, updateRoadReport} from './roadReports.store.slice.ts';
 
 const COLUMNS: (onEditConfirmation: (report: RoadReport) => void) => GridColDef<RoadReport>[] = (onEditConfirmation) => [
     {
@@ -62,21 +62,13 @@ export default function Road() {
     const dispatch = useAppDispatch();
     const rows = useAppSelector(state => state.roadReports.reports);
 
-    const onRowEdit = (report: RoadReport) => {
-        dispatch(updateRoadReport(report));
-    };
-
-    const onEditConfirmation = (report: RoadReport) => {
-        dispatch(confirmRoadReportEdit(report));
-    };
-
     return (
         <div style={{width: '100vw', height: '100vh', backgroundColor: '#f5f5f5'}}>
             <div style={{height: '100%', width: '100%'}}>
                 <DataGrid
                     rows={rows}
                     isRowSelectable={() => true}
-                    columns={COLUMNS(onEditConfirmation)}
+                    columns={COLUMNS((report: RoadReport) => dispatch(editRoadReport(report)))}
                     getRowId={(row: RoadReport) => row.reportNumber}
                     initialState={{
                         pagination: {
@@ -92,8 +84,8 @@ export default function Road() {
                         }
                     }}
                     processRowUpdate={(newRow: RoadReport) => {
-                        onRowEdit(newRow);
-                        return newRow;
+                        dispatch(updateRoadReport(newRow));
+                        return rows.find(row => row.reportNumber === newRow.reportNumber)!;
                     }}
                     onProcessRowUpdateError={console.error}
                 />

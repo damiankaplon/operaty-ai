@@ -1,10 +1,10 @@
-package io.cruvelo.operaty
+package io.cruvelo.operaty.report.road
 
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class RoadReport(
-	val reportNumber: Int?,
+	val reportNumber: Int,
 	val area: String?,
 	val roadNumber: String?,
 	val from: String?,
