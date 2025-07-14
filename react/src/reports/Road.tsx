@@ -1,10 +1,32 @@
-import {DataGrid, type GridColDef} from "@mui/x-data-grid";
+import {DataGrid, GridActionsCellItem, type GridColDef} from "@mui/x-data-grid";
 import * as React from "react";
 import type {RoadReport} from "./RoadReport.ts";
 import {AddButton} from "./AddButton.tsx";
+import CheckIcon from '@mui/icons-material/Check';
+import {useAppDispatch, useAppSelector} from '../store/hooks.ts';
+import {addRoadReport, editRoadReport, updateRoadReport} from './roadReports.store.slice.ts';
 
-
-const COLUMNS: GridColDef[] = [
+const COLUMNS: (onEditConfirmation: (report: RoadReport) => void) => GridColDef<RoadReport>[] = (onEditConfirmation) => [
+    {
+        field: 'action',
+        headerName: 'Potwierdź',
+        sortable: false,
+        filterable: false,
+        renderCell: params => {
+            if (params.row.edited) {
+                return (
+                    <GridActionsCellItem
+                        icon={<CheckIcon/>}
+                        label="Confirm"
+                        onClick={() => onEditConfirmation(params.row)}
+                        color="inherit"
+                    />
+                );
+            } else {
+                return null;
+            }
+        }
+    },
     {field: 'reportNumber', headerName: 'Numer', editable: true},
     {field: 'area', headerName: 'Gdzie', editable: true},
     {field: 'roadNumber', headerName: 'Numer drogi', editable: true},
@@ -32,20 +54,22 @@ const COLUMNS: GridColDef[] = [
     {field: 'dig', headerName: 'WYMIANA [wykop]', editable: true},
     {field: 'infill', headerName: 'WYMIANA [zasyp]', editable: true},
     {field: 'bank', headerName: 'Nasyp', type: 'number', editable: true},
-    {field: 'excavation', headerName: 'Wykop', type: 'number', editable: true},
+    {field: 'excavation', headerName: 'Wykop', type: 'number', editable: true}
 ];
 
 export default function Road() {
-    const [rows, setRows] = React.useState<RoadReport[]>([]);
     const [isLoading, setIsLoading] = React.useState(false);
+    const dispatch = useAppDispatch();
+    const rows = useAppSelector(state => state.roadReports.reports);
+
     return (
         <div style={{width: '100vw', height: '100vh', backgroundColor: '#f5f5f5'}}>
             <div style={{height: '100%', width: '100%'}}>
                 <DataGrid
                     rows={rows}
                     isRowSelectable={() => true}
-                    columns={COLUMNS}
-                    getRowId={(row) => row.reportNumber}
+                    columns={COLUMNS((report: RoadReport) => dispatch(editRoadReport(report)))}
+                    getRowId={(row: RoadReport) => row.reportNumber}
                     initialState={{
                         pagination: {
                             paginationModel: {page: 0, pageSize: 10},
@@ -55,13 +79,19 @@ export default function Road() {
                     loading={isLoading}
                     slotProps={{
                         loadingOverlay: {
-                            variant: 'linear-progress'
+                            variant: 'linear-progress',
+                            noRowsVariant: 'linear-progress'
                         }
                     }}
+                    processRowUpdate={(newRow: RoadReport) => {
+                        dispatch(updateRoadReport(newRow));
+                        return rows.find(row => row.reportNumber === newRow.reportNumber)!;
+                    }}
+                    onProcessRowUpdateError={console.error}
                 />
             </div>
             <AddButton onSuccess={(roadReport) => {
-                setRows((oldRows) => [...oldRows, roadReport]);
+                dispatch(addRoadReport(roadReport));
                 setIsLoading(false);
             }} onLoad={() => setIsLoading(true)}
             />

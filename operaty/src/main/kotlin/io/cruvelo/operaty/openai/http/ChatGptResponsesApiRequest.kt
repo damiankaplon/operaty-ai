@@ -6,7 +6,7 @@ import kotlinx.serialization.json.JsonObject
 
 @Serializable
 data class ChatGptResponsesApiRequest(
-	val model: String,
+	val model: String? = null,
 	val prompt: Prompt,
 	val input: Set<ContentInput>,
 	val text: Text,
