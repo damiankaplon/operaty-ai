@@ -1,13 +1,9 @@
-package io.cruvelo.operaty.report.road
+package io.cruvelo.operaty.openai.http
 
-import io.cruvelo.kotlinx.serialization.UUIDSerializer
 import kotlinx.serialization.Serializable
-import java.util.UUID
 
 @Serializable
-data class RoadReport(
-	@Serializable(with = UUIDSerializer::class)
-	val id: UUID,
+data class ChatGptRoadReportResponse(
 	val reportNumber: Int,
 	val area: String?,
 	val roadNumber: String?,
