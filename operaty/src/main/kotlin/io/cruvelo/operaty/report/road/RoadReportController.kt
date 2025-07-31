@@ -1,153 +1,209 @@
 package io.cruvelo.operaty.report.road
 
 import io.cruvelo.operaty.db.TransactionalRunner
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.area
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.bank
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.columns
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.demolition
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.detailed
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.dig
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.ditch
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.excavation
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.flat
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.from
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.inOut
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.infill
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.inner
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.length
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.loweredCurb
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.measurementDate
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.odh
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.pa
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.report
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.reportDate
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.reportNumber
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.rim
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.roadNumber
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.slope
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.surface
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.task
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.to
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.version
-import io.cruvelo.operaty.report.road.RoadReportVersionTable.volume
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.statements.InsertStatement
+import io.cruvelo.operaty.openai.Schemas
+import io.cruvelo.operaty.openai.http.ChatGptHttpClient
+import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest
+import io.cruvelo.operaty.openai.http.ChatGptResponsesApiResponse
+import io.cruvelo.operaty.openai.http.ChatGptRoadReportResponse
+import io.ktor.client.call.body
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType.Application.Json
+import io.ktor.http.content.MultiPartData
+import io.ktor.http.content.PartData
+import io.ktor.http.content.forEachPart
+import io.ktor.http.contentType
+import io.ktor.http.path
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.readRemaining
+import kotlinx.io.readByteArray
+import kotlinx.serialization.json.Json
+import org.apache.pdfbox.Loader
+import org.apache.pdfbox.text.PDFTextStripper
+import java.util.UUID
 
 class RoadReportController(
+	private val roadReportRepository: RoadReportRepository,
+	private val roadReportPdfContentRepository: RoadReportPdfContentRepository,
 	private val transactionalRunner: TransactionalRunner,
+	chatGptHttpClient: ChatGptHttpClient,
+	private val json: Json,
 ) {
 
-	suspend fun update(roadReport: RoadReport): RoadReport = transactionalRunner.transaction {
-		val versionMax = version.max()
-		val recentVersion = RoadReportVersionTable.select(versionMax).where { reportNumber eq roadReport.reportNumber }.map { it[versionMax] }.single()
-		RoadReportVersionTable.insert { it ->
-			it.from(roadReport)
-			it[version] = recentVersion?.plus(1) ?: 1
+	private val chatGptHttpClient = chatGptHttpClient.client
+
+	suspend fun generate(multipart: MultiPartData): RoadReportVersionDto {
+		var fileBytes: ByteArray = byteArrayOf()
+
+		multipart.forEachPart { part: PartData ->
+			when (part) {
+				is PartData.FileItem -> {
+					val channel: ByteReadChannel = part.provider()
+					fileBytes = fileBytes.plus(channel.readRemaining().readByteArray())
+				}
+				else -> {}
+			}
+			part.dispose()
 		}
-		return@transaction RoadReportVersionTable.select(columns).where { reportNumber eq roadReport.reportNumber }
-			.maxBy { it[version] }
-			.toRoadReport()
+
+		val pdf = Loader.loadPDF(fileBytes)
+		val textStripper = PDFTextStripper().apply {
+			sortByPosition = true
+		}
+		val pdfText = textStripper.getText(pdf)
+
+		val response: ChatGptResponsesApiResponse = chatGptHttpClient.post {
+			url { path("v1/responses") }
+			contentType(Json)
+			setBody(
+				ChatGptResponsesApiRequest(
+					prompt = ChatGptResponsesApiRequest.Prompt(
+						id = "pmpt_685c304658a081978b7633929d9785f702284f6f4e91ded8",
+						version = "9"
+					),
+					input = setOf(
+						ChatGptResponsesApiRequest.ContentInput(
+							role = "user",
+							content = setOf(
+								ChatGptResponsesApiRequest.ContentInput.Content(
+									type = "input_text",
+									text = pdfText
+								)
+							)
+						)
+					),
+					text = ChatGptResponsesApiRequest.Text(
+						format = ChatGptResponsesApiRequest.Text.Format(
+							name = "text",
+							type = "json_schema",
+							schema = Schemas.ROAD_REPORT_OUTPUT_JSON_SCHEMA,
+							description = "Extracts the road report data from the PDF file"
+						)
+					)
+				)
+			)
+		}.body<ChatGptResponsesApiResponse>()
+		val roadReport: RoadReport = json.decodeFromString<ChatGptRoadReportResponse>(response.output.first().content.first().text)
+			.let(::roadReportFrom)
+		transactionalRunner.transaction {
+			roadReportRepository.save(roadReport)
+			roadReportPdfContentRepository.save(roadReport.id, pdfText)
+		}
+		return roadReport.toDto().single()
 	}
 
-	suspend fun getAll(): Set<RoadReport> = transactionalRunner.transaction(readOnly = true) {
-		return@transaction RoadReportVersionTable.select(columns)
-			.groupBy { it[reportNumber] }
-			.mapTo(linkedSetOf()) { (_, rows) -> rows.maxBy { it[version] } }
-			.mapTo(linkedSetOf()) { it.toRoadReport() }
+	suspend fun update(roadReportDto: RoadReportDto): Set<RoadReportVersionDto> = transactionalRunner.transaction {
+		val roadReport = roadReportRepository.findByIdOrThrow(roadReportDto.id)
+		val newVersion: RoadReport.Version.Content = roadReportDto.toNewVersion()
+		roadReport.newVersion(newVersion)
+		roadReportRepository.save(roadReport)
+		return@transaction roadReport.toDto()
+	}
+
+	suspend fun getAll(): Set<RoadReportVersionDto> = transactionalRunner.transaction(readOnly = true) {
+		return@transaction roadReportRepository.findAll().flatMap { it.toDto() }.toSet()
 	}
 }
 
-private fun ResultRow.toRoadReport() = RoadReport(
-	reportNumber = this[reportNumber],
-	area = this[area],
-	roadNumber = this[roadNumber],
-	from = this[from],
-	to = this[to],
-	detailed = this[detailed],
-	task = this[task],
-	report = this[report],
-	measurementDate = this[measurementDate],
-	reportDate = this[reportDate],
-	length = this[length],
-	loweredCurb = this[loweredCurb],
-	rim = this[rim],
-	inOut = this[inOut],
-	flat = this[flat],
-	pa = this[pa],
-	slope = this[slope],
-	ditch = this[ditch],
-	demolition = this[demolition],
-	surface = this[surface],
-	volume = this[volume],
-	inner = this[inner],
-	odh = this[odh],
-	dig = this[dig],
-	infill = this[infill],
-	bank = this[bank],
-	excavation = this[excavation]
-)
+private fun RoadReportDto.toNewVersion(): RoadReport.Version.Content {
+	return RoadReport.Version.Content(
+		reportNumber = reportNumber,
+		area = area,
+		roadNumber = roadNumber,
+		from = from,
+		to = to,
+		detailed = detailed,
+		task = task,
+		report = report,
+		measurementDate = measurementDate,
+		reportDate = reportDate,
+		length = length,
+		loweredCurb = loweredCurb,
+		rim = rim,
+		inOut = inOut,
+		flat = flat,
+		pa = pa,
+		slope = slope,
+		ditch = ditch,
+		demolition = demolition,
+		surface = surface,
+		volume = volume,
+		inner = inner,
+		odh = odh,
+		dig = dig,
+		infill = infill,
+		bank = bank,
+		excavation = excavation
+	)
+}
 
-private object RoadReportVersionTable : Table("report_road_version") {
-
-	val reportNumber = integer("report_number")
-	override val primaryKey = PrimaryKey(reportNumber)
-	val version = integer("version")
-	val area = text("area").nullable()
-	val roadNumber = text("road_number").nullable()
-	val from = text("from").nullable()
-	val to = text("to").nullable()
-	val detailed = text("detailed").nullable()
-	val task = text("task").nullable()
-	val report = text("report").nullable()
-	val measurementDate = text("measurement_date").nullable()
-	val reportDate = text("report_date").nullable()
-	val length = text("length").nullable()
-	val loweredCurb = text("lowered_curb").nullable()
-	val rim = text("rim").nullable()
-	val inOut = text("in_out").nullable()
-	val flat = text("flat").nullable()
-	val pa = text("pa").nullable()
-	val slope = text("slope").nullable()
-	val ditch = text("ditch").nullable()
-	val demolition = text("demolition").nullable()
-	val surface = text("surface").nullable()
-	val volume = text("volume").nullable()
-	val inner = text("inner").nullable()
-	val odh = text("odh").nullable()
-	val dig = float("dig").nullable()
-	val infill = float("infill").nullable()
-	val bank = float("bank").nullable()
-	val excavation = float("excavation").nullable()
-
-	fun InsertStatement<Number>.from(roadReport: RoadReport) {
-		this[reportNumber] = roadReport.reportNumber
-		this[area] = roadReport.area
-		this[from] = roadReport.from
-		this[to] = roadReport.to
-		this[detailed] = roadReport.detailed
-		this[task] = roadReport.task
-		this[report] = roadReport.report
-		this[measurementDate] = roadReport.measurementDate
-		this[reportDate] = roadReport.reportDate
-		this[length] = roadReport.length
-		this[loweredCurb] = roadReport.loweredCurb
-		this[rim] = roadReport.rim
-		this[inOut] = roadReport.inOut
-		this[flat] = roadReport.flat
-		this[pa] = roadReport.pa
-		this[slope] = roadReport.slope
-		this[ditch] = roadReport.ditch
-		this[demolition] = roadReport.demolition
-		this[surface] = roadReport.surface
-		this[volume] = roadReport.volume
-		this[inner] = roadReport.inner
-		this[odh] = roadReport.odh
-		this[dig] = roadReport.dig
-		this[infill] = roadReport.infill
-		this[bank] = roadReport.bank
-		this[excavation] = roadReport.excavation
+private fun roadReportFrom(chatGptRoadReportResponse: ChatGptRoadReportResponse): RoadReport =
+	with(chatGptRoadReportResponse) {
+		RoadReport(
+			id = UUID.randomUUID(),
+			initialVersion = RoadReport.Version.Content(
+				reportNumber,
+				area,
+				roadNumber,
+				from,
+				to,
+				detailed,
+				task,
+				report,
+				measurementDate,
+				reportDate,
+				length,
+				loweredCurb,
+				rim,
+				inOut,
+				flat,
+				pa,
+				slope,
+				ditch,
+				demolition,
+				surface,
+				volume,
+				inner,
+				odh,
+				dig,
+				infill,
+				bank,
+				excavation,
+			)
+		)
 	}
+
+fun RoadReport.toDto(): Set<RoadReportVersionDto> = this.versions.mapTo(linkedSetOf()) {
+	RoadReportVersionDto(
+		id = this.id,
+		version = it.version,
+		reportNumber = it.content.reportNumber,
+		area = it.content.area,
+		roadNumber = it.content.roadNumber,
+		from = it.content.from,
+		to = it.content.to,
+		detailed = it.content.detailed,
+		task = it.content.task,
+		report = it.content.report,
+		measurementDate = it.content.measurementDate,
+		reportDate = it.content.reportDate,
+		length = it.content.length,
+		loweredCurb = it.content.loweredCurb,
+		rim = it.content.rim,
+		inOut = it.content.inOut,
+		flat = it.content.flat,
+		pa = it.content.pa,
+		slope = it.content.slope,
+		ditch = it.content.ditch,
+		demolition = it.content.demolition,
+		surface = it.content.surface,
+		volume = it.content.volume,
+		inner = it.content.inner,
+		odh = it.content.odh,
+		dig = it.content.dig,
+		infill = it.content.infill,
+		bank = it.content.bank,
+		excavation = it.content.excavation,
+	)
 }
