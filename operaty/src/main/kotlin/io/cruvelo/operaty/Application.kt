@@ -1,7 +1,7 @@
 package io.cruvelo.operaty
 
-import io.cruvelo.operaty.report.road.RoadReport
 import io.cruvelo.operaty.report.road.RoadReportController
+import io.cruvelo.operaty.report.road.RoadReportDto
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -14,6 +14,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
+import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
@@ -48,9 +49,12 @@ fun Application.module() {
 						controller.generate(multipart).let { call.respond(it) }
 					}
 					post("/version") {
-						val report = call.receive(RoadReport::class)
+						val report = call.receive(RoadReportDto::class)
 						LOGGER.info { "Updating road report with: " }
 						controller.update(report).let { call.respond(it) }
+					}
+					get {
+						controller.getAll().let { call.respond(it) }
 					}
 				}
 			}

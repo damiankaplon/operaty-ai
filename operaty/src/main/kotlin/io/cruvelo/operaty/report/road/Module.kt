@@ -18,6 +18,8 @@ class Module {
 		json: Json,
 	) =
 		RoadReportController(
+			ExposedRoadReportRepository,
+			ExposedRoadReportPdfContentRepository,
 			transactionalRunner,
 			chatGtpHttpClient,
 			json
