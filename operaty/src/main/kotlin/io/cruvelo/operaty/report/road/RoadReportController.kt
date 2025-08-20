@@ -1,11 +1,12 @@
 package io.cruvelo.operaty.report.road
 
 import io.cruvelo.operaty.db.TransactionalRunner
+import io.cruvelo.operaty.openai.EvalsUpdater
 import io.cruvelo.operaty.openai.Schemas
-import io.cruvelo.operaty.openai.http.ChatGptHttpClient
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiResponse
 import io.cruvelo.operaty.openai.http.ChatGptRoadReportResponse
+import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -27,11 +28,10 @@ class RoadReportController(
 	private val roadReportRepository: RoadReportRepository,
 	private val roadReportPdfContentRepository: RoadReportPdfContentRepository,
 	private val transactionalRunner: TransactionalRunner,
-	chatGptHttpClient: ChatGptHttpClient,
+	private val chatGptHttpClient: HttpClient,
+	private val evalsUpdater: EvalsUpdater,
 	private val json: Json,
 ) {
-
-	private val chatGptHttpClient = chatGptHttpClient.client
 
 	suspend fun generate(multipart: MultiPartData): RoadReportVersionDto {
 		var fileBytes: ByteArray = byteArrayOf()
@@ -98,6 +98,7 @@ class RoadReportController(
 		val newVersion: RoadReport.Version.Content = roadReportDto.toNewVersion()
 		roadReport.newVersion(newVersion)
 		roadReportRepository.save(roadReport)
+		evalsUpdater.provide()
 		return@transaction roadReport.toDto()
 	}
 
