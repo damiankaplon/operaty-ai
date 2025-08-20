@@ -36,7 +36,7 @@ object ResourcesPythonGraderProvider : PythonGraderProvider {
 			?: error("Failed to python grader file")
 }
 
-class EvalsUpdater(
+class RoadReportEvalProvider(
 	private val properties: Properties,
 	private val pythonGraderProvider: PythonGraderProvider,
 	private val chatGptHttpClient: HttpClient,

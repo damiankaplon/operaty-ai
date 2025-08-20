@@ -1,7 +1,7 @@
 package io.cruvelo.operaty.report.road
 
 import io.cruvelo.operaty.db.TransactionalRunner
-import io.cruvelo.operaty.openai.EvalsUpdater
+import io.cruvelo.operaty.openai.RoadReportEvalProvider
 import io.cruvelo.operaty.openai.Schemas
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiResponse
@@ -29,7 +29,7 @@ class RoadReportController(
 	private val roadReportPdfContentRepository: RoadReportPdfContentRepository,
 	private val transactionalRunner: TransactionalRunner,
 	private val chatGptHttpClient: HttpClient,
-	private val evalsUpdater: EvalsUpdater,
+	private val roadReportEvalProvider: RoadReportEvalProvider,
 	private val json: Json,
 ) {
 
@@ -98,7 +98,7 @@ class RoadReportController(
 		val newVersion: RoadReport.Version.Content = roadReportDto.toNewVersion()
 		roadReport.newVersion(newVersion)
 		roadReportRepository.save(roadReport)
-		evalsUpdater.provide()
+		roadReportEvalProvider.provide()
 		return@transaction roadReport.toDto()
 	}
 
