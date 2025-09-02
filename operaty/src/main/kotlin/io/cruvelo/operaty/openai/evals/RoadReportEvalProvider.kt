@@ -1,4 +1,4 @@
-package io.cruvelo.operaty.openai
+package io.cruvelo.operaty.openai.evals
 
 import io.cruvelo.operaty.openai.Schemas.ROAD_REPORT_OUTPUT_JSON_SCHEMA
 import io.cruvelo.operaty.openai.http.ChatGptEval
@@ -7,7 +7,7 @@ import io.cruvelo.operaty.openai.http.ChatGptEvalsApiRequest.DataSourceConfig
 import io.cruvelo.operaty.openai.http.ChatGptEvalsApiRequest.DataSourceConfig.Schema
 import io.cruvelo.operaty.openai.http.ChatGptEvalsApiRequest.DataSourceConfig.SchemaProperty
 import io.cruvelo.operaty.openai.http.ChatGptEvalsApiRequest.Metadata
-import io.cruvelo.operaty.openai.http.ChatGptEvalsApiResponse
+import io.cruvelo.operaty.openai.http.ChatGptEvalsResponse
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -18,27 +18,14 @@ import io.ktor.http.ContentType.Application.Json
 import io.ktor.http.contentType
 import io.ktor.http.path
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 
 private val LOGGER = KotlinLogging.logger { }
 
-fun interface PythonGraderProvider {
-
-	suspend fun provide(srcPath: String): String
-}
-
-object ResourcesPythonGraderProvider : PythonGraderProvider {
-
-	override suspend fun provide(srcPath: String): String =
-		this::class.java.classLoader.getResourceAsStream(srcPath)
-			?.use { inputStream -> inputStream.buffered().readAllBytes() }
-			?.toString(Charsets.UTF_8)
-			?: error("Failed to python grader file")
-}
-
 class RoadReportEvalProvider(
 	private val properties: Properties,
-	private val pythonGraderProvider: PythonGraderProvider,
+	private val pythonScriptGraderProvider: PythonScriptGraderProvider,
 	private val chatGptHttpClient: HttpClient,
 	private val json: Json,
 ) {
@@ -50,8 +37,8 @@ class RoadReportEvalProvider(
 
 	suspend fun provide(): String {
 		LOGGER.debug { "Finding a road report eval with name: ${properties.name} in existing evals" }
-		val evals = chatGptHttpClient.get { url { path("v1/evals") } }.body<Set<ChatGptEval>>()
-		return evals.firstOrNull { it.name == properties.name }?.id
+		val evals = chatGptHttpClient.get { url { path("v1/evals") } }.body<ChatGptEvalsResponse>()
+		return evals.data.firstOrNull { it.name == properties.name }?.id
 			?: createEval()
 	}
 
@@ -62,14 +49,19 @@ class RoadReportEvalProvider(
 			dataSourceConfig = DataSourceConfig(
 				type = "custom",
 				itemSchema = Schema(
+					type = "object",
 					properties = mapOf(
 						"item" to SchemaProperty(
-							type = "object",
+							type = JsonPrimitive("object"),
 							properties = mapOf(
-								"road_report_pdf_content" to SchemaProperty(),
+								"road_report_pdf_content" to SchemaProperty(
+									type = JsonPrimitive("string"),
+									properties = null,
+									required = null
+								),
 								"expected_output" to json.decodeFromJsonElement(ROAD_REPORT_OUTPUT_JSON_SCHEMA),
 							),
-							required = listOf("input", "expected_output")
+							required = listOf("road_report_pdf_content", "expected_output")
 						)
 					),
 					required = listOf("item")
@@ -78,7 +70,7 @@ class RoadReportEvalProvider(
 			testingCriteria = listOf(
 				ChatGptEvalsApiRequest.PythonGrader(
 					name = "Road Report Extraction Matcher",
-					source = pythonGraderProvider.provide(properties.pythonGraderSrc),
+					source = pythonScriptGraderProvider.provide(properties.pythonGraderSrc),
 					passThreshold = 0.8F
 				)
 			),
@@ -87,11 +79,11 @@ class RoadReportEvalProvider(
 			)
 		)
 
-		val response: ChatGptEvalsApiResponse = chatGptHttpClient.post {
+		val response: ChatGptEval = chatGptHttpClient.post {
 			url { path("v1/evals") }
 			contentType(Json)
 			setBody(evalRequest)
-		}.body<ChatGptEvalsApiResponse>()
+		}.body()
 		return response.id
 	}
 }

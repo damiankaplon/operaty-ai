@@ -1,8 +1,8 @@
 package io.cruvelo.operaty.report.road
 
 import io.cruvelo.operaty.db.TransactionalRunner
-import io.cruvelo.operaty.openai.RoadReportEvalProvider
 import io.cruvelo.operaty.openai.Schemas
+import io.cruvelo.operaty.openai.evals.RoadReportEvalProvider
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiResponse
 import io.cruvelo.operaty.openai.http.ChatGptRoadReportResponse

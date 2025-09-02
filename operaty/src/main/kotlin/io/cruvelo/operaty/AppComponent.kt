@@ -11,6 +11,7 @@ import jakarta.inject.Singleton
 @Singleton
 @Component(
 	modules = [
+		io.cruvelo.operaty.openai.evals.Module::class,
 		io.cruvelo.operaty.openai.http.HttpModule::class,
 		io.cruvelo.operaty.serialization.Module::class,
 		io.cruvelo.operaty.db.dagger.Module::class,

@@ -1,7 +1,10 @@
 package io.cruvelo.operaty.openai.http
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class ChatGptEvalsApiRequest(
@@ -33,25 +36,26 @@ data class ChatGptEvalsApiRequest(
 
 		@Serializable
 		data class Schema(
-			val type: String = "object",
+			val type: String,
 			val properties: Map<String, SchemaProperty>,
-			val required: List<String>? = null,
+			val required: List<String>?,
 		)
 
 		@Serializable
 		data class SchemaProperty(
-			val type: String = "string",
-			val properties: Map<String, SchemaProperty>? = null,
-			val required: List<String>? = null,
+			val type: JsonElement,
+			val properties: Map<String, SchemaProperty>?,
+			val required: List<String>?,
 		)
 	}
 
- @Serializable
- data class PythonGrader(
- 	val name: String,
-	val source: String,
- 	val type: String = "python",
-	@SerialName("pass_threshold")
- 	val passThreshold: Float,
- )
+	@OptIn(ExperimentalSerializationApi::class)
+	@Serializable
+	data class PythonGrader(
+		val name: String,
+		val source: String,
+		@SerialName("pass_threshold")
+		val passThreshold: Float,
+		@EncodeDefault val type: String = "python",
+	)
 }

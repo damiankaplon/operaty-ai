@@ -3,8 +3,10 @@ package io.cruvelo.operaty.report.road
 import dagger.Module
 import dagger.Provides
 import io.cruvelo.operaty.db.TransactionalRunner
-import io.cruvelo.operaty.openai.ResourcesPythonGraderProvider
-import io.cruvelo.operaty.openai.RoadReportEvalProvider
+import io.cruvelo.operaty.openai.evals.DefaultJsonlFileEvalRunFactory
+import io.cruvelo.operaty.openai.evals.JsonlFileEvalRunFactory
+import io.cruvelo.operaty.openai.evals.ResourcesPythonScriptGraderProvider
+import io.cruvelo.operaty.openai.evals.RoadReportEvalProvider
 import io.cruvelo.operaty.openai.http.ChatGptHttpClient
 import jakarta.inject.Singleton
 import kotlinx.serialization.json.Json
@@ -21,11 +23,22 @@ class Module {
 	): RoadReportEvalProvider {
 		return RoadReportEvalProvider(
 			properties,
-			ResourcesPythonGraderProvider,
+			ResourcesPythonScriptGraderProvider,
 			chatGptHttpClient.client,
 			json
 		)
 	}
+
+	@Provides
+	@Singleton
+	fun jsonlFileEvalRunFactory(
+		roadReportRepository: RoadReportRepository,
+		roadReportPdfContentRepository: RoadReportPdfContentRepository,
+	): JsonlFileEvalRunFactory = DefaultJsonlFileEvalRunFactory(
+		Json { ignoreUnknownKeys = true; prettyPrint = false },
+		roadReportRepository,
+		roadReportPdfContentRepository,
+	)
 
 	@Provides
 	@Singleton
