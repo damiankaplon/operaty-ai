@@ -2,11 +2,10 @@ package io.cruvelo.operaty.report.road
 
 import io.cruvelo.operaty.db.TransactionalRunner
 import io.cruvelo.operaty.openai.Schemas
-import io.cruvelo.operaty.openai.evals.RoadReportEvalProvider
+import io.cruvelo.operaty.openai.http.ChatGptHttpClient
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiRequest
 import io.cruvelo.operaty.openai.http.ChatGptResponsesApiResponse
 import io.cruvelo.operaty.openai.http.ChatGptRoadReportResponse
-import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -28,10 +27,11 @@ class RoadReportController(
 	private val roadReportRepository: RoadReportRepository,
 	private val roadReportPdfContentRepository: RoadReportPdfContentRepository,
 	private val transactionalRunner: TransactionalRunner,
-	private val chatGptHttpClient: HttpClient,
-	private val roadReportEvalProvider: RoadReportEvalProvider,
+	chatGptHttpClient: ChatGptHttpClient,
 	private val json: Json,
 ) {
+
+	private val chatGptHttpClient = chatGptHttpClient.client
 
 	suspend fun generate(multipart: MultiPartData): RoadReportVersionDto {
 		var fileBytes: ByteArray = byteArrayOf()
@@ -98,112 +98,112 @@ class RoadReportController(
 		val newVersion: RoadReport.Version.Content = roadReportDto.toNewVersion()
 		roadReport.newVersion(newVersion)
 		roadReportRepository.save(roadReport)
-		roadReportEvalProvider.provide()
 		return@transaction roadReport.toDto()
 	}
 
 	suspend fun getAll(): Set<RoadReportVersionDto> = transactionalRunner.transaction(readOnly = true) {
 		return@transaction roadReportRepository.findAll().flatMap { it.toDto() }.toSet()
 	}
-	private fun RoadReportDto.toNewVersion(): RoadReport.Version.Content {
-		return RoadReport.Version.Content(
-			reportNumber = reportNumber,
-			area = area,
-			roadNumber = roadNumber,
-			from = from,
-			to = to,
-			detailed = detailed,
-			task = task,
-			report = report,
-			measurementDate = measurementDate,
-			reportDate = reportDate,
-			length = length,
-			loweredCurb = loweredCurb,
-			rim = rim,
-			inOut = inOut,
-			flat = flat,
-			pa = pa,
-			slope = slope,
-			ditch = ditch,
-			demolition = demolition,
-			surface = surface,
-			volume = volume,
-			inner = inner,
-			odh = odh,
-			dig = dig,
-			infill = infill,
-			bank = bank,
-			excavation = excavation
-		)
-	}
+}
 
-	private fun roadReportFrom(chatGptRoadReportResponse: ChatGptRoadReportResponse): RoadReport =
-		with(chatGptRoadReportResponse) {
-			RoadReport(
-				id = UUID.randomUUID(),
-				initialVersion = RoadReport.Version.Content(
-					reportNumber,
-					area,
-					roadNumber,
-					from,
-					to,
-					detailed,
-					task,
-					report,
-					measurementDate,
-					reportDate,
-					length,
-					loweredCurb,
-					rim,
-					inOut,
-					flat,
-					pa,
-					slope,
-					ditch,
-					demolition,
-					surface,
-					volume,
-					inner,
-					odh,
-					dig,
-					infill,
-					bank,
-					excavation,
-				)
+private fun RoadReportDto.toNewVersion(): RoadReport.Version.Content {
+	return RoadReport.Version.Content(
+		reportNumber = reportNumber,
+		area = area,
+		roadNumber = roadNumber,
+		from = from,
+		to = to,
+		detailed = detailed,
+		task = task,
+		report = report,
+		measurementDate = measurementDate,
+		reportDate = reportDate,
+		length = length,
+		loweredCurb = loweredCurb,
+		rim = rim,
+		inOut = inOut,
+		flat = flat,
+		pa = pa,
+		slope = slope,
+		ditch = ditch,
+		demolition = demolition,
+		surface = surface,
+		volume = volume,
+		inner = inner,
+		odh = odh,
+		dig = dig,
+		infill = infill,
+		bank = bank,
+		excavation = excavation
+	)
+}
+
+private fun roadReportFrom(chatGptRoadReportResponse: ChatGptRoadReportResponse): RoadReport =
+	with(chatGptRoadReportResponse) {
+		RoadReport(
+			id = UUID.randomUUID(),
+			initialVersion = RoadReport.Version.Content(
+				reportNumber,
+				area,
+				roadNumber,
+				from,
+				to,
+				detailed,
+				task,
+				report,
+				measurementDate,
+				reportDate,
+				length,
+				loweredCurb,
+				rim,
+				inOut,
+				flat,
+				pa,
+				slope,
+				ditch,
+				demolition,
+				surface,
+				volume,
+				inner,
+				odh,
+				dig,
+				infill,
+				bank,
+				excavation,
 			)
-		}
-
-	private fun RoadReport.toDto(): Set<RoadReportVersionDto> = this.versions.mapTo(linkedSetOf()) {
-		RoadReportVersionDto(
-			id = this.id,
-			version = it.version,
-			reportNumber = it.content.reportNumber,
-			area = it.content.area,
-			roadNumber = it.content.roadNumber,
-			from = it.content.from,
-			to = it.content.to,
-			detailed = it.content.detailed,
-			task = it.content.task,
-			report = it.content.report,
-			measurementDate = it.content.measurementDate,
-			reportDate = it.content.reportDate,
-			length = it.content.length,
-			loweredCurb = it.content.loweredCurb,
-			rim = it.content.rim,
-			inOut = it.content.inOut,
-			flat = it.content.flat,
-			pa = it.content.pa,
-			slope = it.content.slope,
-			ditch = it.content.ditch,
-			demolition = it.content.demolition,
-			surface = it.content.surface,
-			volume = it.content.volume,
-			inner = it.content.inner,
-			odh = it.content.odh,
-			dig = it.content.dig,
-			infill = it.content.infill,
-			bank = it.content.bank,
-			excavation = it.content.excavation,
 		)
 	}
+
+fun RoadReport.toDto(): Set<RoadReportVersionDto> = this.versions.mapTo(linkedSetOf()) {
+	RoadReportVersionDto(
+		id = this.id,
+		version = it.version,
+		reportNumber = it.content.reportNumber,
+		area = it.content.area,
+		roadNumber = it.content.roadNumber,
+		from = it.content.from,
+		to = it.content.to,
+		detailed = it.content.detailed,
+		task = it.content.task,
+		report = it.content.report,
+		measurementDate = it.content.measurementDate,
+		reportDate = it.content.reportDate,
+		length = it.content.length,
+		loweredCurb = it.content.loweredCurb,
+		rim = it.content.rim,
+		inOut = it.content.inOut,
+		flat = it.content.flat,
+		pa = it.content.pa,
+		slope = it.content.slope,
+		ditch = it.content.ditch,
+		demolition = it.content.demolition,
+		surface = it.content.surface,
+		volume = it.content.volume,
+		inner = it.content.inner,
+		odh = it.content.odh,
+		dig = it.content.dig,
+		infill = it.content.infill,
+		bank = it.content.bank,
+		excavation = it.content.excavation,
+	)
 }
