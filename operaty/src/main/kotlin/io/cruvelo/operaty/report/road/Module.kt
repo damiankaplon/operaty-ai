@@ -45,15 +45,13 @@ class Module {
 	fun roadReportController(
 		transactionalRunner: TransactionalRunner,
 		chatGtpHttpClient: ChatGptHttpClient,
-		roadReportEvalProvider: RoadReportEvalProvider,
 		json: Json,
 	) =
 		RoadReportController(
 			ExposedRoadReportRepository,
 			ExposedRoadReportPdfContentRepository,
 			transactionalRunner,
-			chatGtpHttpClient.client,
-			roadReportEvalProvider,
-			json
+			chatGtpHttpClient,
+			json,
 		)
 }
