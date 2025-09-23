@@ -18,4 +18,8 @@ class RoadReportInMemoryRepository : RoadReportRepository {
 	override fun findAll(): Set<RoadReport> {
 		return reports.toSet()
 	}
+
+	override fun findLastModified(size: Int): Set<RoadReport> {
+		return reports.sortedByDescending { it.versions.last().version }.take(size).toSet()
+	}
 }
