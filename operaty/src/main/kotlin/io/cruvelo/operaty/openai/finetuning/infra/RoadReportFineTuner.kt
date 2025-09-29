@@ -8,10 +8,7 @@ import io.cruvelo.operaty.openai.finetuning.JsonlFineTuneEncoder
 import io.cruvelo.operaty.openai.finetuning.JsonlRoadReportVersionEncoder
 import io.cruvelo.operaty.report.road.RoadReportPdfContentRepository
 import io.cruvelo.operaty.report.road.RoadReportRepository
-import io.github.oshai.kotlinlogging.KotlinLogging
 import java.util.UUID
-
-private val LOGGER = KotlinLogging.logger {}
 
 class RoadReportFineTuner(
 	private val fineTunerSourceProvider: FineTunerSourceProvider,
