@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import java.util.UUID
 
 class FineTunedModel(
-	val id: UUID,
+	val id: UUID = UUID.randomUUID(),
 	val providerId: String,
 	val source: Set<Source>,
 ) {

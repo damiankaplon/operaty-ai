@@ -4,19 +4,18 @@ import io.cruvelo.operaty.report.road.RoadReport
 import io.cruvelo.operaty.report.road.RoadReportRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 
-private val LOGGER = KotlinLogging.logger {}
+private val LOGGER = KotlinLogging.logger { }
 
-class RoadReportFineTuningService(
+class FineTunerSourceRoadReportProvider(
 	private val fineTunedModelRepository: FineTunedModelRepository,
 	private val roadReportRepository: RoadReportRepository,
-	private val fineTuner: FineTuner
-) {
+) : FineTunerSourceProvider {
 
-	fun fineTune() {
+	override fun provide(): Set<FineTunedModel.Source> {
 		val lastModifiedReports = roadReportRepository.findLastModified(50)
 		if (lastModifiedReports.size <= 10) {
 			LOGGER.debug { "Skipping fine-tuning. There are only ${lastModifiedReports.size} reports. At least 10 are required for fine tuning." }
-			return
+			return emptySet()
 		}
 		val mostAccurateModel = fineTunedModelRepository.findMostAccurate()
 		val lastModifiedReportVersions: Set<FineTunedModel.Source> =
@@ -27,13 +26,8 @@ class RoadReportFineTuningService(
 		val newSourcesCount = lastModifiedReportVersions.size - sharedSources.size
 		if (newSourcesCount <= 5) {
 			LOGGER.debug { "Skipping fine-tuning. The most accurate model $mostAccurateModel is already sourced with similar set of data" }
-			return
+			return emptySet()
 		}
-		fineTuner.tune(sharedSources)
+		return sharedSources
 	}
-}
-
-fun interface FineTuner {
-
-	fun tune(source: Set<FineTunedModel.Source>): FineTunedModel
 }

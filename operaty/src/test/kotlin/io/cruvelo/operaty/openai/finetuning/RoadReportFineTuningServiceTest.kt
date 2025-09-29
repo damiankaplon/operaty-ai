@@ -1,5 +1,6 @@
 package io.cruvelo.operaty.openai.finetuning
 
+import io.cruvelo.operaty.openai.finetuning.infra.RoadReportFineTuner
 import io.cruvelo.operaty.report.road.RoadReportInMemoryRepository
 import io.cruvelo.operaty.report.road.RoadReportRepository
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -17,13 +18,13 @@ internal class RoadReportFineTuningServiceTest {
 
 	private lateinit var fineTuner: FineTuner
 
-	private lateinit var roadReportFineTuningService: RoadReportFineTuningService
+	private lateinit var roadReportFineTuningService: RoadReportFineTuner
 
 	@BeforeTest
 	fun setUp() {
 		fineTunedModelRepository = FineTunedModelInMemoryRepository()
 		roadReportRepository = RoadReportInMemoryRepository()
-		roadReportFineTuningService = RoadReportFineTuningService(fineTunedModelRepository, roadReportRepository) { fineTuner.tune(it) }
+		roadReportFineTuningService = RoadReportFineTuner(fineTunedModelRepository, roadReportRepository) { fineTuner.tune(it) }
 	}
 
 	@Test

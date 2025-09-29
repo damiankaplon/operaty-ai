@@ -1,14 +1,16 @@
 package io.cruvelo.operaty.openai.finetuning
 
-import io.cruvelo.operaty.openai.finetuning.FineTuningJsonl.ContentMessage
-import io.cruvelo.operaty.openai.finetuning.FineTuningJsonl.Role
-import io.cruvelo.operaty.openai.finetuning.FineTuningJsonl.ToolCallsMessage
-import io.cruvelo.operaty.openai.finetuning.FineTuningJsonl.ToolCallsMessage.ToolCall
-import io.cruvelo.operaty.openai.finetuning.FineTuningJsonl.ToolCallsMessage.ToolCall.Function
+import io.cruvelo.operaty.openai.finetuning.infra.FineTuningJsonl
+import io.cruvelo.operaty.openai.finetuning.infra.FineTuningJsonl.ContentMessage
+import io.cruvelo.operaty.openai.finetuning.infra.FineTuningJsonl.Role
+import io.cruvelo.operaty.openai.finetuning.infra.FineTuningJsonl.ToolCallsMessage
+import io.cruvelo.operaty.openai.finetuning.infra.FineTuningJsonl.ToolCallsMessage.ToolCall
+import io.cruvelo.operaty.openai.finetuning.infra.FineTuningJsonl.ToolCallsMessage.ToolCall.Function
+import io.cruvelo.operaty.openai.finetuning.infra.JsonlFineTuneEncoderKotlinx
 import org.assertj.core.api.Assertions.assertThat
 import kotlin.test.Test
 
-class JsonlFineTuneEncoderKotlinxTest {
+internal class JsonlFineTuneEncoderKotlinxTest {
 
 	@Test
 	fun `should properly encode object to single line jsonl`() {
