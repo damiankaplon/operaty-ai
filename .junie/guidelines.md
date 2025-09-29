@@ -123,3 +123,5 @@ class RoadReportInMemoryRepository : RoadReportRepository {
 
 All tests should have // given, // when, // then or // when and then sections.
 All test classes responsible for running tests should be internal. On the other hand, all test helper classes should be simple public.
+For assertions use assertj when possible.
+For mocking purposes use MockK library.
