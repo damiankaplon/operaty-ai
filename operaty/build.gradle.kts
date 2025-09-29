@@ -51,6 +51,7 @@ dependencies {
 	implementation(libs.hikari.cp)
 	testImplementation(libs.ktor.server.test.host)
 	testImplementation(libs.kotlin.test.junit)
+	testImplementation(libs.mockk)
 	testImplementation(libs.assertj.core)
 }
 
