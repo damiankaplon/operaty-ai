@@ -4,6 +4,8 @@ ktor-version = "3.2.0"
 logback-version = "1.5.18"
 dagger-version = "2.56.2"
 exposed-version = "0.61.0"
+assertj-version = "3.27.4"
+mockk-version = "1.13.12"
 
 [libraries]
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor-version" }
@@ -31,6 +33,9 @@ exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "e
 exposed-java-time = { module = "org.jetbrains.exposed:exposed-java-time", version.ref = "exposed-version" }
 exposed-json = { module = "org.jetbrains.exposed:exposed-json", version.ref = "exposed-version" }
 hikari-cp = { module = "com.zaxxer:HikariCP", version = "6.3.0" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj-version" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk-version" }
+
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-version" }

@@ -35,7 +35,7 @@ fun Application.module() {
 		.build()
 	install(StatusPages) {
 		exception<Throwable> { call, cause ->
-			LOGGER.error(throwable = cause) { "Application internal error:" }
+			LOGGER.error(throwable = cause) { "Application internal error!" }
 			call.respondText(text = "500: $cause", status = HttpStatusCode.InternalServerError)
 		}
 	}

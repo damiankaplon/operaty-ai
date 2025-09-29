@@ -1,7 +1,9 @@
 package io.cruvelo.operaty.report.road
 
 import io.cruvelo.persistance.ObjectNotFoundException
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.upsert
 import java.util.UUID
 
@@ -15,6 +17,8 @@ interface RoadReportRepository {
 	fun findById(id: UUID): RoadReport?
 
 	fun findAll(): Set<RoadReport>
+
+	fun findLastModified(size: Int): Set<RoadReport>
 }
 
 object ExposedRoadReportRepository : RoadReportRepository {
@@ -53,6 +57,26 @@ object ExposedRoadReportRepository : RoadReportRepository {
 				versions = versions.toSet()
 			)
 		}.toSet()
+	}
+
+	override fun findLastModified(size: Int): Set<RoadReport> {
+		return RoadReportTable.join(
+			otherTable = RoadReportVersionTable,
+			joinType = JoinType.INNER,
+			onColumn = RoadReportTable.id,
+			otherColumn = RoadReportVersionTable.reportId,
+			lateral = false,
+			additionalConstraint = null
+		).select(RoadReportTable.columns + RoadReportVersionTable.columns)
+			.orderBy(RoadReportVersionTable.version, SortOrder.DESC)
+			.limit(size)
+			.groupBy { it[RoadReportTable.id] }
+			.mapTo(mutableSetOf()) { (roadReportId: UUID, rows: List<ResultRow>) ->
+				return@mapTo RoadReport(
+					id = roadReportId,
+					versions = rows.map { it.toRoadReportVersion() }.toSet()
+				)
+			}
 	}
 
 	private fun ResultRow.toRoadReportVersion(): RoadReport.Version {
