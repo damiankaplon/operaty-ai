@@ -15,6 +15,8 @@ import jakarta.inject.Singleton
 		io.cruvelo.operaty.openai.http.HttpModule::class,
 		io.cruvelo.operaty.serialization.Module::class,
 		io.cruvelo.operaty.db.dagger.Module::class,
+		io.cruvelo.operaty.openai.files.Module::class,
+		io.cruvelo.operaty.openai.finetuning.infra.Module::class,
 		io.cruvelo.operaty.report.road.Module::class,
 	]
 )
