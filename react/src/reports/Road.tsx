@@ -4,7 +4,7 @@ import type {RoadReport} from "./RoadReport.ts";
 import {AddButton} from "./AddButton.tsx";
 import CheckIcon from '@mui/icons-material/Check';
 import {useAppDispatch, useAppSelector} from '../store/hooks.ts';
-import {addRoadReport, editRoadReport, updateRoadReport} from './roadReports.store.slice.ts';
+import {addRoadReport, editRoadReport, fetchRoadReports, updateRoadReport} from './roadReports.store.slice.ts';
 
 const COLUMNS: (onEditConfirmation: (report: RoadReport) => void) => GridColDef<RoadReport>[] = (onEditConfirmation) => [
     {
@@ -61,6 +61,21 @@ export default function Road() {
     const [isLoading, setIsLoading] = React.useState(false);
     const dispatch = useAppDispatch();
     const rows = useAppSelector(state => state.roadReports.reports);
+
+    React.useEffect(() => {
+        let canceled = false;
+        (async () => {
+            setIsLoading(true);
+            try {
+                await dispatch(fetchRoadReports());
+            } finally {
+                if (!canceled) setIsLoading(false);
+            }
+        })();
+        return () => {
+            canceled = true;
+        };
+    }, [dispatch]);
 
     return (
         <div style={{width: '100vw', height: '100vh', backgroundColor: '#f5f5f5'}}>

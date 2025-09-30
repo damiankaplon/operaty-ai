@@ -48,7 +48,7 @@ fun Application.module() {
 						val multipart = call.receiveMultipart()
 						controller.generate(multipart).let { call.respond(it) }
 					}
-					post("/version") {
+					post("/versions") {
 						val report = call.receive(RoadReportDto::class)
 						LOGGER.info { "Updating road report with: " }
 						controller.update(report).let { call.respond(it) }

@@ -90,7 +90,7 @@ class RoadReportController(
 			roadReportRepository.save(roadReport)
 			roadReportPdfContentRepository.save(roadReport.id, pdfText)
 		}
-		return roadReport.toDto().single()
+		return roadReport.toCurrentVersionDto()
 	}
 
 	suspend fun update(roadReportDto: RoadReportDto): Set<RoadReportVersionDto> = transactionalRunner.transaction {
@@ -98,11 +98,12 @@ class RoadReportController(
 		val newVersion: RoadReport.Version.Content = roadReportDto.toNewVersion()
 		roadReport.newVersion(newVersion)
 		roadReportRepository.save(roadReport)
+
 		return@transaction roadReport.toDto()
 	}
 
 	suspend fun getAll(): Set<RoadReportVersionDto> = transactionalRunner.transaction(readOnly = true) {
-		return@transaction roadReportRepository.findAll().flatMap { it.toDto() }.toSet()
+		return@transaction roadReportRepository.findAll().map { it.toCurrentVersionDto() }.toSet()
 	}
 }
 
@@ -174,36 +175,43 @@ private fun roadReportFrom(chatGptRoadReportResponse: ChatGptRoadReportResponse)
 		)
 	}
 
-fun RoadReport.toDto(): Set<RoadReportVersionDto> = this.versions.mapTo(linkedSetOf()) {
-	RoadReportVersionDto(
-		id = this.id,
-		version = it.version,
-		reportNumber = it.content.reportNumber,
-		area = it.content.area,
-		roadNumber = it.content.roadNumber,
-		from = it.content.from,
-		to = it.content.to,
-		detailed = it.content.detailed,
-		task = it.content.task,
-		report = it.content.report,
-		measurementDate = it.content.measurementDate,
-		reportDate = it.content.reportDate,
-		length = it.content.length,
-		loweredCurb = it.content.loweredCurb,
-		rim = it.content.rim,
-		inOut = it.content.inOut,
-		flat = it.content.flat,
-		pa = it.content.pa,
-		slope = it.content.slope,
-		ditch = it.content.ditch,
-		demolition = it.content.demolition,
-		surface = it.content.surface,
-		volume = it.content.volume,
-		inner = it.content.inner,
-		odh = it.content.odh,
-		dig = it.content.dig,
-		infill = it.content.infill,
-		bank = it.content.bank,
-		excavation = it.content.excavation,
+private fun RoadReport.toDto(): Set<RoadReportVersionDto> = this.versions.mapTo(linkedSetOf()) {
+	createRoadReportVersionDtoFrom(this, it)
+}
+
+private fun createRoadReportVersionDtoFrom(roadReport: RoadReport, roadReportVersion: RoadReport.Version): RoadReportVersionDto {
+	return RoadReportVersionDto(
+		id = roadReport.id,
+		version = roadReportVersion.version,
+		reportNumber = roadReportVersion.content.reportNumber,
+		area = roadReportVersion.content.area,
+		roadNumber = roadReportVersion.content.roadNumber,
+		from = roadReportVersion.content.from,
+		to = roadReportVersion.content.to,
+		detailed = roadReportVersion.content.detailed,
+		task = roadReportVersion.content.task,
+		report = roadReportVersion.content.report,
+		measurementDate = roadReportVersion.content.measurementDate,
+		reportDate = roadReportVersion.content.reportDate,
+		length = roadReportVersion.content.length,
+		loweredCurb = roadReportVersion.content.loweredCurb,
+		rim = roadReportVersion.content.rim,
+		inOut = roadReportVersion.content.inOut,
+		flat = roadReportVersion.content.flat,
+		pa = roadReportVersion.content.pa,
+		slope = roadReportVersion.content.slope,
+		ditch = roadReportVersion.content.ditch,
+		demolition = roadReportVersion.content.demolition,
+		surface = roadReportVersion.content.surface,
+		volume = roadReportVersion.content.volume,
+		inner = roadReportVersion.content.inner,
+		odh = roadReportVersion.content.odh,
+		dig = roadReportVersion.content.dig,
+		infill = roadReportVersion.content.infill,
+		bank = roadReportVersion.content.bank,
+		excavation = roadReportVersion.content.excavation,
 	)
 }
+
+private fun RoadReport.toCurrentVersionDto(): RoadReportVersionDto =
+	this.versions.maxBy { it.version }.let { createRoadReportVersionDtoFrom(this, it) }

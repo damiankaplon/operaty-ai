@@ -7,6 +7,7 @@ import io.cruvelo.operaty.openai.evals.DefaultJsonlFileEvalRunFactory
 import io.cruvelo.operaty.openai.evals.JsonlFileEvalRunFactory
 import io.cruvelo.operaty.openai.evals.ResourcesPythonScriptGraderProvider
 import io.cruvelo.operaty.openai.evals.RoadReportEvalProvider
+import io.cruvelo.operaty.openai.finetuning.infra.RoadReportFineTuner
 import io.cruvelo.operaty.openai.http.ChatGptHttpClient
 import jakarta.inject.Singleton
 import kotlinx.serialization.json.Json
@@ -46,6 +47,7 @@ class Module {
 		transactionalRunner: TransactionalRunner,
 		chatGtpHttpClient: ChatGptHttpClient,
 		json: Json,
+		roadReportFineTuner: RoadReportFineTuner,
 	) =
 		RoadReportController(
 			ExposedRoadReportRepository,
@@ -53,5 +55,6 @@ class Module {
 			transactionalRunner,
 			chatGtpHttpClient,
 			json,
+			roadReportFineTuner
 		)
 }
